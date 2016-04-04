@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="example">
+      <UniqueIdentifier>{f2b9f1ec-4503-47df-8cb5-7743f8cf9709}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="example\dispatch">
+      <UniqueIdentifier>{d8acd86c-ab2b-455e-8f8d-ceb944ff67af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="example\simple">
+      <UniqueIdentifier>{ff037a27-1849-45cc-8c66-17f3a59fc045}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="commserv">
+      <UniqueIdentifier>{88ffcf80-8fde-4a71-b0a1-2cc8b2063881}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\example\simple\Makefile.mk">
+      <Filter>example\simple</Filter>
+    </None>
+    <None Include="..\commserv\Makefile.mk">
+      <Filter>commserv</Filter>
+    </None>
+    <None Include="..\example\dispatch\Makefile.mk">
+      <Filter>example\dispatch</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\example\simple\server.cc">
+      <Filter>example\simple</Filter>
+    </ClCompile>
+    <ClCompile Include="..\commserv\CommHandler.cc">
+      <Filter>commserv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\commserv\CommServer.cc">
+      <Filter>commserv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\commserv\MsgHandler.cc">
+      <Filter>commserv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\commserv\PacketBuffer.cc">
+      <Filter>commserv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\commserv\ProtoObjs.cc">
+      <Filter>commserv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\commserv\SafeRand.cc">
+      <Filter>commserv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\commserv\ServerPool.cc">
+      <Filter>commserv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\commserv\TcpClients.cc">
+      <Filter>commserv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\example\dispatch\master.cc">
+      <Filter>example\dispatch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\example\dispatch\worker.cc">
+      <Filter>example\dispatch</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\commserv\CommHandler.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\commserv\CommServer.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\commserv\Handler.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\commserv\MsgHandler.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\commserv\PacketBuffer.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\commserv\ProtoObjs.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\commserv\SafeRand.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\commserv\ServerPool.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\commserv\SimpleJson.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\commserv\TcpClients.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\example\dispatch\proto.h">
+      <Filter>example\dispatch</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

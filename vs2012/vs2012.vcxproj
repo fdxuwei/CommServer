@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C379A2F0-E765-11E5-95DE-005056C00008}</ProjectGuid>
+    <RootNamespace>vs2012</RootNamespace>
+    <ProjectName>CommServer</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath);E:\boostvc12\include\boost-1_53;C:\Users\xuwei\Documents\rapidjson\include;C:\Users\xuwei\Documents\muduo;D:\boost_1_53_0</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\;../../../msgServer/commonlibs;E:\xuwei\project\rapidjson-master\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\commserv\CommHandler.cc" />
+    <ClCompile Include="..\commserv\CommServer.cc" />
+    <ClCompile Include="..\commserv\MsgHandler.cc" />
+    <ClCompile Include="..\commserv\PacketBuffer.cc" />
+    <ClCompile Include="..\commserv\ProtoObjs.cc" />
+    <ClCompile Include="..\commserv\SafeRand.cc" />
+    <ClCompile Include="..\commserv\ServerPool.cc" />
+    <ClCompile Include="..\commserv\TcpClients.cc" />
+    <ClCompile Include="..\example\dispatch\master.cc" />
+    <ClCompile Include="..\example\dispatch\worker.cc" />
+    <ClCompile Include="..\example\simple\server.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\commserv\Makefile.mk" />
+    <None Include="..\example\dispatch\Makefile.mk" />
+    <None Include="..\example\simple\Makefile.mk" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\commserv\CommHandler.h" />
+    <ClInclude Include="..\commserv\CommServer.h" />
+    <ClInclude Include="..\commserv\Handler.h" />
+    <ClInclude Include="..\commserv\MsgHandler.h" />
+    <ClInclude Include="..\commserv\PacketBuffer.h" />
+    <ClInclude Include="..\commserv\ProtoObjs.h" />
+    <ClInclude Include="..\commserv\SafeRand.h" />
+    <ClInclude Include="..\commserv\ServerPool.h" />
+    <ClInclude Include="..\commserv\SimpleJson.h" />
+    <ClInclude Include="..\commserv\TcpClients.h" />
+    <ClInclude Include="..\example\dispatch\proto.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
