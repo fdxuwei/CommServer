@@ -26,16 +26,17 @@ public:
 	{ connectionCallback_ = cb; }
 	void setMessageCallback(const muduo::net::MessageCallback& cb)
 	{ messageCallback_ = cb; }
-	void removeTcpClient(const std::string &name);
-	void removeTcpClientIfNotRetry(const std::string &name);
+	void removeTcpClient(const std::string &ip, int port);
+	void removeTcpClientIfNotRetry(const std::string &ip, int port);
 private:
 	//
 	typedef std::map<std::string, TcpClientPtr> TcpClientMap;
 	//
 	std::string makeClientName(const std::string &ip, int port);
 	void connectInLoop(const std::string &ip, int port);
-	void removeTcpClientInLoop(const std::string &name);
-	void removeTcpClientIfNotRetryInLoop(const std::string &name);
+	void removeTcpClientInLoop(const std::string &ip, int port);
+	void removeTcpClientIfNotRetryInLoop(const std::string &ip, int port);
+	void removeTcpClient(const TcpClientPtr &c);
 	//
 	ClientConnectionCallback connectionCallback_;
 	muduo::net::MessageCallback messageCallback_;

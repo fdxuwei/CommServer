@@ -2,10 +2,15 @@
 #include <vector>
 #include <string>
 #include <unistd.h>
+#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <muduo/base/Logging.h>
 #include <muduo/net/InetAddress.h>
 #include <commserv/CommServer.h>
+
+#ifndef CONN_TEST
+#define CONN_TEST 0
+#endif
 
 using namespace std;
 using namespace muduo;
@@ -109,6 +114,59 @@ bool parseArgs(int ac, char *av[], Config &cfg)
 	return true;
 }
 
+void ipChanged(CommServer *cs, const vector<InetAddress> &addList, const vector<InetAddress> &delList)
+{
+	//
+	cout << "ip changed" << endl;
+	//
+	for(int i = 0; i < addList.size(); ++i)
+	{
+		cs->connect(addList[i].toIp(), addList[i].toPort());
+	}
+	//
+	for(int i = 0; i < delList.size(); ++i)
+	{
+		cs->removeClient(delList[i].toIp(), delList[i].toPort());
+	}
+}
+
+void mock(CommServer *cs)
+{
+	vector<InetAddress> addList;
+	vector<InetAddress> delList;
+	static int enrty = 0;
+	
+	if(0 == enrty)
+	{
+		addList.push_back(InetAddress("192.168.1.107", 8000));
+		addList.push_back(InetAddress("192.168.1.107", 8001));
+		addList.push_back(InetAddress("192.168.1.107", 8002));
+		delList.push_back(InetAddress("192.168.1.107", 8003));
+		delList.push_back(InetAddress("192.168.1.107", 8004));
+	}
+	else if(1 == enrty)
+	{
+		addList.push_back(InetAddress("192.168.1.107", 8003));
+		addList.push_back(InetAddress("192.168.1.107", 8004));
+		delList.push_back(InetAddress("192.168.1.107", 8001));
+		delList.push_back(InetAddress("192.168.1.107", 8002));
+		delList.push_back(InetAddress("192.168.1.107", 8000));
+	}
+	else if(2 == enrty)
+	{
+		addList.push_back(InetAddress("192.168.1.107", 8005));
+		delList.push_back(InetAddress("192.168.1.107", 8005));
+	}
+	enrty = (++enrty)%3;
+
+	ipChanged(cs, addList, delList);
+}
+
+void handleBlock(CommServer *cs, const TcpConnectionPtr &conn, const PacketBuffer &pb)
+{
+	sleep(50);
+}
+
 int main(int ac, char *av[])
 {
 	Config cfg;
@@ -121,7 +179,7 @@ int main(int ac, char *av[])
 	muduo::Logger::setLogLevel(muduo::Logger::DEBUG);
 	//
 	EventLoop loop;
-	CommServer server(&loop);
+	CommServer server(&loop, 4);
 	//
 	server.setServreInfo(cfg.appid, cfg.servtype, cfg.servno);
 	// listen
@@ -134,6 +192,11 @@ int main(int ac, char *av[])
 	{
 		server.connect(cfg.remoteAddr[i].toIp(), cfg.remoteAddr[i].toPort());
 	}
+	int taskThreadId = server.createThreadPool(1);
+	server.registerHandler(8, handleBlock, taskThreadId);
+#if CONN_TEST
+	loop.runEvery(0.01, boost::bind(mock, &server));
+#endif
 	loop.loop();
 	return 0;
 }

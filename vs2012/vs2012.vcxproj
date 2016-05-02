@@ -65,6 +65,7 @@
     <ClCompile Include="..\example\simple\server.cc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\commserv\CommProto.proto" />
     <None Include="..\commserv\Makefile.mk" />
     <None Include="..\example\dispatch\Makefile.mk" />
     <None Include="..\example\simple\Makefile.mk" />

@@ -26,14 +26,14 @@ void TcpClients::connect(const std::string &ip, int port)
 	loop_->runInLoop(boost::bind(&TcpClients::connectInLoop, this, ip, port));
 }
 
-void TcpClients::removeTcpClient(const std::string &name)
+void TcpClients::removeTcpClient(const std::string &ip, int port)
 {
-	loop_->runInLoop(boost::bind(&TcpClients::removeTcpClientInLoop, this, name));
+	loop_->runInLoop(boost::bind(&TcpClients::removeTcpClientInLoop, this, ip, port));
 }
 
-void TcpClients::removeTcpClientIfNotRetry(const std::string &name)
+void TcpClients::removeTcpClientIfNotRetry(const std::string &ip, int port)
 {
-	loop_->runInLoop(boost::bind(&TcpClients::removeTcpClientIfNotRetryInLoop, this, name));
+	loop_->runInLoop(boost::bind(&TcpClients::removeTcpClientIfNotRetryInLoop, this, ip, port));
 }
 
 void TcpClients::connectInLoop(const std::string &ip, int port)
@@ -57,20 +57,40 @@ void TcpClients::connectInLoop(const std::string &ip, int port)
 	tcpClients_[clientName] = tcp;
 }
 
-
-void TcpClients::removeTcpClientInLoop(const std::string &name)
+void TcpClients::removeTcpClient(const TcpClientPtr &c)
 {
-	// only run in main loop
-	loop_->assertInLoopThread();
-	//
-	tcpClients_.erase(name);
+	// do nothing
 }
 
-void TcpClients::removeTcpClientIfNotRetryInLoop(const std::string &name)
+void TcpClients::removeTcpClientInLoop(const std::string &ip, int port)
 {
 	// only run in main loop
 	loop_->assertInLoopThread();
 	//
+	//
+	string clientName = makeClientName(ip, port);
+	TcpClientMap::iterator itr = tcpClients_.find(clientName);
+	if(tcpClients_.end() != itr)
+	{
+		TcpClientPtr cp= itr->second;
+		cp->getLoop()->runInLoop(boost::bind(&TcpClient::stop, cp.get()));
+		// cp->stop();
+		if(cp->connection())
+		{
+			cp->connection()->forceClose();
+		}
+		//
+		cp->getLoop()->runInLoop(boost::bind(&TcpClients::removeTcpClient, this, cp));
+		tcpClients_.erase(itr);
+	}
+}
+
+void TcpClients::removeTcpClientIfNotRetryInLoop(const std::string &ip, int port)
+{
+	// only run in main loop
+	loop_->assertInLoopThread();
+	//
+	string name = makeClientName(ip, port);
 	TcpClientMap::iterator it = tcpClients_.find(name);
 	if(tcpClients_.end() == it)
 		return;

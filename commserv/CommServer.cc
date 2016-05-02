@@ -14,7 +14,7 @@ using namespace muduo;
 using namespace muduo::net;
 
 #define MAX_PACKET_SIZE 65536
-#define BASE_PROTO_HEAD_LEN 4
+#define BASE_PROTO_HEAD_LEN 8
 #define INVALID_THREADPOOL_ID -1
 
 CommServer::CommServer(muduo::net::EventLoop *loop, int threadNum /* =0 */)
@@ -69,17 +69,17 @@ void CommServer::onMessage(const muduo::net::TcpConnectionPtr &conn, muduo::net:
 	int readableBytes;
 	int packetLen;
 	while(((readableBytes = buf->readableBytes()) >= BASE_PROTO_HEAD_LEN)
-		&& ((packetLen = buf->peekInt16()) <= readableBytes))
+		&& ((packetLen = buf->peekInt32()) <= readableBytes))
 	{
-		if(packetLen < BASE_PROTO_HEAD_LEN)
+		if(packetLen < BASE_PROTO_HEAD_LEN || packetLen > MAX_PACKET_SIZE)
 		{
 			LOG_ERROR << "invalid packet length: " << packetLen;
 			conn->forceClose();
 			return;
 		}
 		// handle packet
-		int dataSize = buf->readInt16()-BASE_PROTO_HEAD_LEN;
-		int proto = buf->readInt16();
+		int dataSize = buf->readInt32()-BASE_PROTO_HEAD_LEN;
+		int proto = buf->readInt32();
 		//
 		MsgHandlerMap::iterator itr = handlers_.find(proto);
 		if(handlers_.end() == itr)
@@ -96,7 +96,7 @@ void CommServer::onMessage(const muduo::net::TcpConnectionPtr &conn, muduo::net:
 		else
 		{
 			// all threadPoolIds in MsgHandlerMap is valid
-			assert(threadPools_.size() < threadPoolId && 0 >= threadPoolId);
+			assert(threadPools_.size() > threadPoolId && 0 >= threadPoolId);
 			boost::shared_array<char> sa(new char[dataSize]);
 			memcpy(sa.get(), buf->peek(), dataSize);
 			PacketBuffer pb(sa, dataSize);
@@ -153,7 +153,7 @@ void CommServer::onClientConnection(const muduo::net::TcpConnectionPtr &conn, co
 	else
 	{
 		LOG_WARN << "connection down, conn=" << conn->name();
-		tcpClients_.removeTcpClientIfNotRetry(clientName);
+	//	tcpClients_.removeTcpClientIfNotRetry(clientName);
 	}
 }
 
@@ -164,9 +164,9 @@ void CommServer::makePacket(int proto, const char *in, int inSize, char *out, in
 	outSize = BASE_PROTO_HEAD_LEN + inSize;
 	assert(outSize <= outBufsize);
 	char *tmp = out;
-	*(uint16_t*)tmp = hostToNetwork16(outSize);
+	*(uint32_t*)tmp = hostToNetwork32(outSize);
 	tmp += sizeof(uint16_t);
-	*(uint16_t*)tmp = hostToNetwork16(proto);
+	*(uint32_t*)tmp = hostToNetwork32(proto);
 	tmp += sizeof(uint16_t);
 	memcpy(tmp, in, inSize);
 }
@@ -278,4 +278,9 @@ void CommServer::handleConnectAck(CommServer* commServer, const muduo::net::TcpC
 	}
 	//
 	serverPool_.addServer(si.appid, si.servtype, si.servno, conn);
+}
+
+void CommServer::removeClient(const std::string &ip, int port)
+{
+	tcpClients_.removeTcpClient(ip, port);
 }

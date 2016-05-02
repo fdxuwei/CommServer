@@ -24,6 +24,9 @@
     <None Include="..\example\dispatch\Makefile.mk">
       <Filter>example\dispatch</Filter>
     </None>
+    <None Include="..\commserv\CommProto.proto">
+      <Filter>commserv</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\example\simple\server.cc">

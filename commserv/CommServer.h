@@ -71,6 +71,8 @@ public:
 	//
 	int createThreadPool(int threadNum);
 	void runInThreadPool(int threadPoolId, const ThreadPoolCallback &cb);
+	//
+	void removeClient(const std::string &ip, int port);
 private:
 	//
 	void onServerConnection(const muduo::net::TcpConnectionPtr &conn);
