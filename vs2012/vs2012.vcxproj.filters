@@ -97,5 +97,11 @@
     <ClInclude Include="..\example\dispatch\proto.h">
       <Filter>example\dispatch</Filter>
     </ClInclude>
+    <ClInclude Include="..\commserv\ServerId.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\commserv\ServerBroker.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -3,6 +3,7 @@
 #include <muduo/base/Logging.h>
 #include <muduo/net/InetAddress.h>
 #include "TcpClients.h"
+#include "ServerId.h"
 
 using namespace std;
 using namespace muduo;
@@ -21,40 +22,40 @@ void TcpClients::start()
 	threadPool_.start();
 }
 
-void TcpClients::connect(const std::string &ip, int port)
+void TcpClients::connect(const std::string &servName, const std::string &ip, int port)
 {
-	loop_->runInLoop(boost::bind(&TcpClients::connectInLoop, this, ip, port));
+	loop_->runInLoop(boost::bind(&TcpClients::connectInLoop, this, servName, ip, port));
 }
 
-void TcpClients::removeTcpClient(const std::string &ip, int port)
+void TcpClients::removeTcpClient(const std::string &servName, const std::string &ip, int port)
 {
-	loop_->runInLoop(boost::bind(&TcpClients::removeTcpClientInLoop, this, ip, port));
+	loop_->runInLoop(boost::bind(&TcpClients::removeTcpClientInLoop, this, servName, ip, port));
 }
 
-void TcpClients::removeTcpClientIfNotRetry(const std::string &ip, int port)
+void TcpClients::removeTcpClientIfNotRetry(const std::string &servName, const std::string &ip, int port)
 {
-	loop_->runInLoop(boost::bind(&TcpClients::removeTcpClientIfNotRetryInLoop, this, ip, port));
+	loop_->runInLoop(boost::bind(&TcpClients::removeTcpClientIfNotRetryInLoop, this, servName, ip, port));
 }
 
-void TcpClients::connectInLoop(const std::string &ip, int port)
+void TcpClients::connectInLoop(const std::string &servName, const std::string &ip, int port)
 {
 	// only run in main loop
 	loop_->assertInLoopThread();
 	//
-	std::string clientName = makeClientName(ip, port);
-	if(tcpClients_.find(clientName) != tcpClients_.end())
+	std::string servId = makeServId(servName, ip, port);
+	if(tcpClients_.find(servId) != tcpClients_.end())
 	{
-		LOG_WARN << "There is already a same client exists: " << clientName;
+		LOG_WARN << "There is already a same client exists: " << servId;
 		return;
 	}
 	//
-	TcpClientPtr tcp(new TcpClient(threadPool_.getNextLoop(), InetAddress(ip, port), clientName));
-	tcp->setConnectionCallback(boost::bind(connectionCallback_, _1, clientName));
+	TcpClientPtr tcp(new TcpClient(threadPool_.getNextLoop(), InetAddress(ip, port), servId));
+	tcp->setConnectionCallback(boost::bind(connectionCallback_, _1, servId));
 	tcp->setMessageCallback(messageCallback_);
 	tcp->enableRetry();
 	tcp->connect();
 	// add to map
-	tcpClients_[clientName] = tcp;
+	tcpClients_[servId] = tcp;
 }
 
 void TcpClients::removeTcpClient(const TcpClientPtr &c)
@@ -62,14 +63,14 @@ void TcpClients::removeTcpClient(const TcpClientPtr &c)
 	// do nothing
 }
 
-void TcpClients::removeTcpClientInLoop(const std::string &ip, int port)
+void TcpClients::removeTcpClientInLoop(const std::string &servName, const std::string &ip, int port)
 {
 	// only run in main loop
 	loop_->assertInLoopThread();
 	//
 	//
-	string clientName = makeClientName(ip, port);
-	TcpClientMap::iterator itr = tcpClients_.find(clientName);
+	string servId = makeServId(servName, ip, port);
+	TcpClientMap::iterator itr = tcpClients_.find(servId);
 	if(tcpClients_.end() != itr)
 	{
 		TcpClientPtr cp= itr->second;
@@ -85,26 +86,19 @@ void TcpClients::removeTcpClientInLoop(const std::string &ip, int port)
 	}
 }
 
-void TcpClients::removeTcpClientIfNotRetryInLoop(const std::string &ip, int port)
+void TcpClients::removeTcpClientIfNotRetryInLoop(const std::string &servName, const std::string &ip, int port)
 {
 	// only run in main loop
 	loop_->assertInLoopThread();
 	//
-	string name = makeClientName(ip, port);
-	TcpClientMap::iterator it = tcpClients_.find(name);
+	string servId = makeServId(servName, ip, port);
+	TcpClientMap::iterator it = tcpClients_.find(servId);
 	if(tcpClients_.end() == it)
 		return;
 	//
 	if(!it->second->retry())
 	{
-		LOG_WARN << "Erase tcp client, name=" << name;
+		LOG_WARN << "Erase tcp client, name=" << servId;
 		tcpClients_.erase(it);
 	}
-}
-
-std::string TcpClients::makeClientName(const std::string &ip, int port)
-{
-	char buf[128] = {0};
-	snprintf(buf, sizeof(buf), "%s:%d", ip.c_str(), port);
-	return buf;
 }

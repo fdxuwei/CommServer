@@ -44,7 +44,7 @@ struct ConnContext
 public:
 	
 protected:
-	std::string clientName;
+	std::string servId;
 	CONN_TYPE ctype;
 };
 
@@ -56,13 +56,12 @@ class CommServer: public boost::enable_shared_from_this<CommServer>
 	friend class CommHandler;
 public:
 	CommServer(muduo::net::EventLoop *loop, int threadNum = 0);
-	void setServreInfo(int appid, int servtype, int servno);
-	void listen(const std::string &ip, int port);
-	void connect(const std::string &ip, int port);
+	void setServreInfo(const std::string &servName, const std::string &servIp, unsigned servPort);
+	void listen();
+	void connect(const std::string &servName, const std::string &ip, int port);
 	void sendPacket(const muduo::net::TcpConnectionPtr &conn, int proto, const char *data, int size);
-	void sendPacket(int stype, int no, int proto, const char *data, int size);
-	void sendPacket(int stype, int no, int appid, int proto, const char *data, int size);
-	void sendPacketRandom(int stype, int proto, const char *data, int size);
+	void sendPacket(const std::string &servName, const std::string &servIp, unsigned servPort, int proto, const char *data, int size);
+	void sendPacketRandom(const std::string &servName, int proto, const char *data, int size);
 	//
 	void setHeartbeatTime(int seconds);
 	//
@@ -72,11 +71,11 @@ public:
 	int createThreadPool(int threadNum);
 	void runInThreadPool(int threadPoolId, const ThreadPoolCallback &cb);
 	//
-	void removeClient(const std::string &ip, int port);
+	void removeServer(const std::string &servName, const std::string &servIp, unsigned servPort);
 private:
 	//
 	void onServerConnection(const muduo::net::TcpConnectionPtr &conn);
-	void onClientConnection(const muduo::net::TcpConnectionPtr &conn, const std::string &clientName);
+	void onClientConnection(const muduo::net::TcpConnectionPtr &conn, const std::string &servId);
 	void onMessage(const muduo::net::TcpConnectionPtr &conn, muduo::net::Buffer *buf, muduo::Timestamp time);
 	//
 	void makePacket(int proto, const char *in, int inSize, char *out, int outBufsize, int &outSize);
@@ -89,9 +88,9 @@ private:
 	typedef std::map<int, MsgHandler> MsgHandlerMap;
 	MsgHandlerMap handlers_;
 	//
-	int appid_;
-	int servtype_;
-	int servno_;
+	std::string servName_;
+	std::string servIp_;
+	unsigned servPort_;
 	//
 	muduo::net::EventLoop *loop_;
 	int threadNum_;

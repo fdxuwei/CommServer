@@ -16,14 +16,24 @@ using namespace std;
 using namespace muduo;
 using namespace muduo::net;
 
+struct ServInfo
+{
+	ServInfo(){}
+	ServInfo(const std::string&n, const std::string &i, unsigned p)
+		: name (n)
+		, ip (i)
+		, port (p)
+	{
+	}
+	std::string name;
+	std::string ip;
+	unsigned port;
+};
 
 struct Config
 {
-	int appid;
-	int servtype;
-	int servno;
-	boost::shared_ptr<InetAddress> localAddr;
-	vector<InetAddress> remoteAddr;
+	ServInfo localInfo;
+	vector<ServInfo> remoteInfos;
 };
 
 class Spliter
@@ -64,39 +74,36 @@ private:
 };
 bool parseArgs(int ac, char *av[], Config &cfg)
 {
-	if(ac < 4)
+	if(ac < 3)
 	{
-		string usage = "Usage: main -a appid -t servtype -n servno [-l ip:port] [-r ip:port,..]";
+		string usage = "Usage: main -l name:ip:port] [-r name:ip:port,..]";
 		cout << usage << endl;
 		return false;
 	}
 	//
 	int oc;
-	while((oc = getopt(ac, av, ":a:t:n:l:r:")) != -1)
+	while((oc = getopt(ac, av, "l:r:")) != -1)
 	{
 		switch(oc)
 		{
-		case 'a':
-			cfg.appid = atoi(optarg);
-			break;
-		case 't':
-			cfg.servtype = atoi(optarg);
-			break;
-		case 'n':
-			cfg.servno = atoi(optarg);
-			break;
 		case 'l':
 			{
 				Spliter sp(":", optarg);
-				cfg.localAddr.reset(new InetAddress(sp[0], atoi(sp[1].c_str())));
+				cfg.localInfo.name = sp[0];
+				cfg.localInfo.ip = sp[1];
+				cfg.localInfo.port = atoi(sp[2].c_str());
 			}
 			break;
 		case 'r':
 			{
 				Spliter sp(":,", optarg);
-				for(int i = 0; i < sp.size(); i+=2)
+				for(int i = 0; i < sp.size(); i+=3)
 				{
-					cfg.remoteAddr.push_back(InetAddress(sp[i], atoi(sp[i+1].c_str())));
+					ServInfo si;
+					si.name = sp[i];
+					si.ip = sp[i+1];
+					si.port = atoi(sp[i+2].c_str());
+					cfg.remoteInfos.push_back(si);
 				}
 			}
 			break;
@@ -114,48 +121,48 @@ bool parseArgs(int ac, char *av[], Config &cfg)
 	return true;
 }
 
-void ipChanged(CommServer *cs, const vector<InetAddress> &addList, const vector<InetAddress> &delList)
+void ipChanged(CommServer *cs, const vector<ServInfo> &addList, const vector<ServInfo> &delList)
 {
 	//
 	cout << "ip changed" << endl;
 	//
 	for(int i = 0; i < addList.size(); ++i)
 	{
-		cs->connect(addList[i].toIp(), addList[i].toPort());
+		cs->connect(addList[i].name, addList[i].ip, addList[i].port);
 	}
 	//
 	for(int i = 0; i < delList.size(); ++i)
 	{
-		cs->removeClient(delList[i].toIp(), delList[i].toPort());
+		cs->removeServer(delList[i].name, delList[i].ip, delList[i].port);
 	}
 }
 
 void mock(CommServer *cs)
 {
-	vector<InetAddress> addList;
-	vector<InetAddress> delList;
+	vector<ServInfo> addList;
+	vector<ServInfo> delList;
 	static int enrty = 0;
 	
 	if(0 == enrty)
 	{
-		addList.push_back(InetAddress("192.168.1.107", 8000));
-		addList.push_back(InetAddress("192.168.1.107", 8001));
-		addList.push_back(InetAddress("192.168.1.107", 8002));
-		delList.push_back(InetAddress("192.168.1.107", 8003));
-		delList.push_back(InetAddress("192.168.1.107", 8004));
+		addList.push_back(ServInfo("provider", "192.168.1.107", 8000));
+		addList.push_back(ServInfo("provider", "192.168.1.107", 8001));
+		addList.push_back(ServInfo("provider", "192.168.1.107", 8002));
+		delList.push_back(ServInfo("provider", "192.168.1.107", 8003));
+		delList.push_back(ServInfo("provider", "192.168.1.107", 8004));
 	}
 	else if(1 == enrty)
 	{
-		addList.push_back(InetAddress("192.168.1.107", 8003));
-		addList.push_back(InetAddress("192.168.1.107", 8004));
-		delList.push_back(InetAddress("192.168.1.107", 8001));
-		delList.push_back(InetAddress("192.168.1.107", 8002));
-		delList.push_back(InetAddress("192.168.1.107", 8000));
+		addList.push_back(ServInfo("provider", "192.168.1.107", 8003));
+		addList.push_back(ServInfo("provider", "192.168.1.107", 8004));
+		delList.push_back(ServInfo("provider", "192.168.1.107", 8001));
+		delList.push_back(ServInfo("provider", "192.168.1.107", 8002));
+		delList.push_back(ServInfo("provider", "192.168.1.107", 8000));
 	}
 	else if(2 == enrty)
 	{
-		addList.push_back(InetAddress("192.168.1.107", 8005));
-		delList.push_back(InetAddress("192.168.1.107", 8005));
+		addList.push_back(ServInfo("provider", "192.168.1.107", 8005));
+		delList.push_back(ServInfo("provider", "192.168.1.107", 8005));
 	}
 	enrty = (++enrty)%3;
 
@@ -181,16 +188,13 @@ int main(int ac, char *av[])
 	EventLoop loop;
 	CommServer server(&loop, 4);
 	//
-	server.setServreInfo(cfg.appid, cfg.servtype, cfg.servno);
+	server.setServreInfo(cfg.localInfo.name, cfg.localInfo.ip, cfg.localInfo.port);
 	// listen
-	if(cfg.localAddr)
-	{
-		server.listen(cfg.localAddr->toIp(), cfg.localAddr->toPort());
-	}
+	server.listen();
 	// connect
-	for(int i = 0; i < cfg.remoteAddr.size(); ++i)
+	for(int i = 0; i < cfg.remoteInfos.size(); ++i)
 	{
-		server.connect(cfg.remoteAddr[i].toIp(), cfg.remoteAddr[i].toPort());
+		server.connect(cfg.remoteInfos[i].name, cfg.remoteInfos[i].ip, cfg.remoteInfos[i].port);
 	}
 	int taskThreadId = server.createThreadPool(1);
 	server.registerHandler(8, handleBlock, taskThreadId);

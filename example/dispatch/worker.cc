@@ -17,13 +17,24 @@ using namespace muduo;
 using namespace muduo::net;
 
 
+struct ServInfo
+{
+	ServInfo(){}
+	ServInfo(const std::string&n, const std::string &i, unsigned p)
+		: name (n)
+		, ip (i)
+		, port (p)
+	{
+	}
+	std::string name;
+	std::string ip;
+	unsigned port;
+};
+
 struct Config
 {
-	int appid;
-	int servtype;
-	int servno;
-	boost::shared_ptr<InetAddress> localAddr;
-	vector<InetAddress> remoteAddr;
+	ServInfo localInfo;
+	vector<ServInfo> remoteInfos;
 };
 
 class Spliter
@@ -62,42 +73,27 @@ private:
 	string empty_;
 	vector<string> svec_;
 };
+
 bool parseArgs(int ac, char *av[], Config &cfg)
 {
-	if(ac < 4)
+	if(ac < 3)
 	{
-		string usage = "Usage: main -a appid -t servtype -n servno [-l ip:port] [-r ip:port,..]";
+		string usage = "Usage: main -l name:ip:port] [-r name:ip:port,..]";
 		cout << usage << endl;
 		return false;
 	}
 	//
 	int oc;
-	while((oc = getopt(ac, av, ":a:t:n:l:r:")) != -1)
+	while((oc = getopt(ac, av, "l:r:")) != -1)
 	{
 		switch(oc)
 		{
-		case 'a':
-			cfg.appid = atoi(optarg);
-			break;
-		case 't':
-			cfg.servtype = atoi(optarg);
-			break;
-		case 'n':
-			cfg.servno = atoi(optarg);
-			break;
 		case 'l':
 			{
 				Spliter sp(":", optarg);
-				cfg.localAddr.reset(new InetAddress(sp[0], atoi(sp[1].c_str())));
-			}
-			break;
-		case 'r':
-			{
-				Spliter sp(":,", optarg);
-				for(int i = 0; i < sp.size(); i+=2)
-				{
-					cfg.remoteAddr.push_back(InetAddress(sp[i], atoi(sp[i+1].c_str())));
-				}
+				cfg.localInfo.name = sp[0];
+				cfg.localInfo.ip = sp[1];
+				cfg.localInfo.port = atoi(sp[2].c_str());
 			}
 			break;
 		case '?':
@@ -122,16 +118,13 @@ public:
 		, server_ (loop, 4) // 4 threads
 	{
 	}
-	void init(int appid, int servtype, int servno, InetAddress &addr)
+	void init(const ServInfo &localInfo)
 	{
 		server_.registerHandler(DPI_TASK_ASSIGN, boost::bind(&Worker::handleTaskAssign, this, _1, _2, _3));
 		//
-		appid_ = appid;
-		servtype_ = servtype;
-		servno_ = servno;
-		server_.setServreInfo(appid, servtype, servno);
+		server_.setServreInfo(localInfo.name, localInfo.ip, localInfo.port);
 		//
-		server_.listen(addr.toIp(), addr.toPort());
+		server_.listen();
 
 	}
 	//
@@ -147,11 +140,9 @@ public:
 		server_.sendPacket(conn, DPI_TASK_DONE, td.jsonStr(), td.jsonSize());
 	}
 private:
-	int appid_;
-	int servtype_;
-	int servno_;
 	EventLoop *loop_;
 	CommServer server_;
+	std::string consumerName_;
 	//
 };
 
@@ -170,7 +161,7 @@ int main(int ac, char *av[])
 	EventLoop loop;
 	Worker server(&loop);
 	//
-	server.init(cfg.appid, cfg.servtype, cfg.servno, *cfg.localAddr.get());
+	server.init(cfg.localInfo);
 	loop.loop();
 	return 0;
 }

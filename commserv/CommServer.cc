@@ -8,6 +8,7 @@
 #include "CommServer.h"
 #include "PacketBuffer.h"
 #include "ProtoObjs.h"
+#include "ServerId.h"
 
 using namespace std;
 using namespace muduo;
@@ -39,29 +40,29 @@ void CommServer::setHeartbeatTime(int seconds)
 	heartbeatTime_ = seconds;
 }
 
-void CommServer::setServreInfo(int appid, int servtype, int servno)
+void CommServer::setServreInfo(const std::string &servName, const std::string &servIp, unsigned servPort)
 {
-	appid_ = appid;
-	servtype_ = servtype;
-	servno_ = servno;
-	LOG_INFO << "Server appid=" << appid << ", servtype=" << servtype << ", servno=" << servno;
+	servName_ = servName;
+	servIp_ = servIp;
+	servPort_ = servPort;
+	LOG_INFO << "Server name=" << servName_ << ", server ip=" << servIp_ << ", server port=" << servPort;
 }
 
-void CommServer::listen(const std::string &ip, int port)
+void CommServer::listen()
 {
 	assert(!tcpServer_);
-	LOG_INFO << "Listen on " << ip << ":" << port;
-	tcpServer_.reset(new TcpServer(loop_, InetAddress(ip, port), ""));
+	LOG_INFO << "Listen on " << servIp_ << ":" << servPort_;
+	tcpServer_.reset(new TcpServer(loop_, InetAddress(servIp_, servPort_), ""));
 	tcpServer_->setConnectionCallback(boost::bind(&CommServer::onServerConnection, this, _1));
 	tcpServer_->setMessageCallback(boost::bind(&CommServer::onMessage, this, _1, _2, _3));
 	tcpServer_->setThreadNum(threadNum_);
 	tcpServer_->start();
 }
 
-void CommServer::connect(const std::string &ip, int port)
+void CommServer::connect(const std::string &servName, const std::string &ip, int port)
 {
-	LOG_INFO << "Connect to " << ip << ":" << port;
-	tcpClients_.connect(ip, port);
+	LOG_INFO << "Connect to " << servName << ":" << ip << ":" << port;
+	tcpClients_.connect(servName, ip, port);
 }
 
 void CommServer::onMessage(const muduo::net::TcpConnectionPtr &conn, muduo::net::Buffer *buf, muduo::Timestamp time)
@@ -124,11 +125,12 @@ void CommServer::onServerConnection(const muduo::net::TcpConnectionPtr &conn)
 	}
 	else
 	{
-		LOG_WARN << "connection down, conn=" << conn->name();
+		const ConnContext &ctx = boost::any_cast<ConnContext>(conn->getContext());
+		LOG_WARN << "connection down, conn=" << ctx.servId;
 	}
 }
 
-void CommServer::onClientConnection(const muduo::net::TcpConnectionPtr &conn, const std::string &clientName)
+void CommServer::onClientConnection(const muduo::net::TcpConnectionPtr &conn, const std::string &servId)
 {
 	//
 	if(conn->connected())
@@ -140,19 +142,21 @@ void CommServer::onClientConnection(const muduo::net::TcpConnectionPtr &conn, co
 			conn->setContext(ConnContext());
 			ctx = boost::any_cast<ConnContext>(conn->getMutableContext());
 			ctx->ctype = CT_CLIENT;
+			ctx->servId = servId;
 		}
 		// send self info 
 		ServerInfo si;
-		si.appid =appid_;
-		si.servtype = servtype_;
-		si.servno = servno_;
+		si.servName = servName_;
+		si.servIp = servIp_;
+		si.servPort = servPort_;
 		si.toJson();
 		//
 		sendPacket(conn, PI_CONNECT_REQ, si.jsonStr(), si.jsonSize());
 	}
 	else
 	{
-		LOG_WARN << "connection down, conn=" << conn->name();
+		const ConnContext &ctx = boost::any_cast<ConnContext>(conn->getContext());
+		LOG_WARN << "connection down, conn=" << ctx.servId;
 	//	tcpClients_.removeTcpClientIfNotRetry(clientName);
 	}
 }
@@ -165,9 +169,9 @@ void CommServer::makePacket(int proto, const char *in, int inSize, char *out, in
 	assert(outSize <= outBufsize);
 	char *tmp = out;
 	*(uint32_t*)tmp = hostToNetwork32(outSize);
-	tmp += sizeof(uint16_t);
+	tmp += sizeof(uint32_t);
 	*(uint32_t*)tmp = hostToNetwork32(proto);
-	tmp += sizeof(uint16_t);
+	tmp += sizeof(uint32_t);
 	memcpy(tmp, in, inSize);
 }
 
@@ -182,31 +186,22 @@ void CommServer::sendPacket(const muduo::net::TcpConnectionPtr &conn, int proto,
 
 }
 
-void CommServer::sendPacket(int stype, int no, int proto, const char *data, int size)
+void CommServer::sendPacket(const std::string &servName, const std::string &servIp, unsigned servPort, int proto, const char *data, int size)
 {
 	char buf[MAX_PACKET_SIZE];
 	int packetLen;
 	makePacket(proto, data, size, buf, sizeof(buf), packetLen);
 	//
-	serverPool_.send(appid_, stype, no, buf, packetLen);
+	serverPool_.send(servName, servIp, servPort, buf, packetLen);
 }
 
-void CommServer::sendPacket(int stype, int no, int appid, int proto, const char *data, int size)
+void CommServer::sendPacketRandom(const std::string &servName, int proto, const char *data, int size)
 {
 	char buf[MAX_PACKET_SIZE];
 	int packetLen;
 	makePacket(proto, data, size, buf, sizeof(buf), packetLen);
 	//
-	serverPool_.send(appid, stype, no, buf, packetLen);
-}
-
-void CommServer::sendPacketRandom(int stype, int proto, const char *data, int size)
-{
-	char buf[MAX_PACKET_SIZE];
-	int packetLen;
-	makePacket(proto, data, size, buf, sizeof(buf), packetLen);
-	//
-	serverPool_.sendRandom(appid_, stype, buf, packetLen);
+	serverPool_.sendRandom(servName, buf, packetLen);
 }
 
 void CommServer::registerHandler(int proto, const MsgFunc& handler)
@@ -257,12 +252,16 @@ void CommServer::handleConnectReq(CommServer* commServer, const muduo::net::TcpC
 		return ;
 	}
 	//
-	serverPool_.addServer(si.appid, si.servtype, si.servno, conn);
+	ConnContext *ctx = boost::any_cast<ConnContext>(conn->getMutableContext());
+	assert(ctx);
+	ctx->servId = makeServId(si.servName, si.servIp, si.servPort);
+	//
+	serverPool_.addServer(si.servName, si.servIp, si.servPort, conn);
 	// response
 	ServerInfo thisInfo;
-	thisInfo.appid = appid_;
-	thisInfo.servno = servno_;
-	thisInfo.servtype = servtype_;
+	thisInfo.servName = servName_;
+	thisInfo.servIp = servIp_;
+	thisInfo.servPort = servPort_;
 	thisInfo.toJson();
 	sendPacket(conn, PI_CONNECT_ACK, thisInfo.jsonStr(), thisInfo.jsonSize());
 }
@@ -277,10 +276,19 @@ void CommServer::handleConnectAck(CommServer* commServer, const muduo::net::TcpC
 		return ;
 	}
 	//
-	serverPool_.addServer(si.appid, si.servtype, si.servno, conn);
+	const ConnContext &ctx = boost::any_cast<ConnContext>(conn->getContext());
+	std::string siId = makeServId(si.servName, si.servIp, si.servPort);
+	if(ctx.servId != siId)
+	{
+		LOG_ERROR << "server info not match: local=" << ctx.servId << ", remote=" << siId;
+		conn->forceClose();
+		return;
+	}
+	//
+	serverPool_.addServer(si.servName, si.servIp, si.servPort, conn);
 }
 
-void CommServer::removeClient(const std::string &ip, int port)
+void CommServer::removeServer(const std::string &servName, const std::string &servIp, unsigned servPort)
 {
-	tcpClients_.removeTcpClient(ip, port);
+	tcpClients_.removeTcpClient(servName, servIp, servPort);
 }

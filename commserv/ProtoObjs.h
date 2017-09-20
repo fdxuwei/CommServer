@@ -72,20 +72,20 @@ class ServerInfo: public JsonObjs
 public:
 	virtual void pack()
 	{
-		set("appid", appid);
-		set("servtype", servtype);
-		set("servno", servno);
+		set("serv_name", servName);
+		set("serv_ip", servIp);
+		set("serv_port", servPort);
 	}
 	virtual void parse()
 	{
-		get("appid", appid);
-		get("servtype", servtype);
-		get("servno", servno);
+		get("serv_name", servName);
+		get("serv_ip", servIp);
+		get("serv_port", servPort);
 	}
 	//
-	int appid;
-	int servtype;
-	int servno;
+	std::string servName;
+	std::string servIp;
+	unsigned servPort;
 };
 //
 class AddrInfo: public JsonObjs

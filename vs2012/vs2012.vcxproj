@@ -78,6 +78,8 @@
     <ClInclude Include="..\commserv\PacketBuffer.h" />
     <ClInclude Include="..\commserv\ProtoObjs.h" />
     <ClInclude Include="..\commserv\SafeRand.h" />
+    <ClInclude Include="..\commserv\ServerBroker.h" />
+    <ClInclude Include="..\commserv\ServerId.h" />
     <ClInclude Include="..\commserv\ServerPool.h" />
     <ClInclude Include="..\commserv\SimpleJson.h" />
     <ClInclude Include="..\commserv\TcpClients.h" />
