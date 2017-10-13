@@ -58,10 +58,10 @@ public:
 	CommServer(muduo::net::EventLoop *loop, int threadNum = 0);
 	void setServreInfo(const std::string &servName, const std::string &servIp, unsigned servPort);
 	void listen();
-	void connect(const std::string &servName, const std::string &ip, int port);
-	void sendPacket(const muduo::net::TcpConnectionPtr &conn, int proto, const char *data, int size);
-	void sendPacket(const std::string &servName, const std::string &servIp, unsigned servPort, int proto, const char *data, int size);
-	void sendPacketRandom(const std::string &servName, int proto, const char *data, int size);
+	void connect(const std::string &servName, const std::string &ip, int port); // thread safe
+	void sendPacket(const muduo::net::TcpConnectionPtr &conn, int proto, const char *data, int size); // thread safe
+	void sendPacket(const std::string &servName, const std::string &servIp, unsigned servPort, int proto, const char *data, int size); // thread safe
+	void sendPacketRandom(const std::string &servName, int proto, const char *data, int size); // thread safe
 	//
 	void setHeartbeatTime(int seconds);
 	//
@@ -71,7 +71,7 @@ public:
 	int createThreadPool(int threadNum);
 	void runInThreadPool(int threadPoolId, const ThreadPoolCallback &cb);
 	//
-	void removeServer(const std::string &servName, const std::string &servIp, unsigned servPort);
+	void removeServer(const std::string &servName, const std::string &servIp, unsigned servPort);// thread safe
 private:
 	//
 	void onServerConnection(const muduo::net::TcpConnectionPtr &conn);

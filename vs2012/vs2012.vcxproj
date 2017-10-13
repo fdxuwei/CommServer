@@ -58,8 +58,11 @@
     <ClCompile Include="..\commserv\PacketBuffer.cc" />
     <ClCompile Include="..\commserv\ProtoObjs.cc" />
     <ClCompile Include="..\commserv\SafeRand.cc" />
+    <ClCompile Include="..\commserv\ServerBroker.cc" />
     <ClCompile Include="..\commserv\ServerPool.cc" />
     <ClCompile Include="..\commserv\TcpClients.cc" />
+    <ClCompile Include="..\example\broker_dispatch\master.cc" />
+    <ClCompile Include="..\example\broker_dispatch\worker.cc" />
     <ClCompile Include="..\example\dispatch\master.cc" />
     <ClCompile Include="..\example\dispatch\worker.cc" />
     <ClCompile Include="..\example\simple\server.cc" />
@@ -67,6 +70,7 @@
   <ItemGroup>
     <None Include="..\commserv\CommProto.proto" />
     <None Include="..\commserv\Makefile.mk" />
+    <None Include="..\example\broker_dispatch\Makefile.mk" />
     <None Include="..\example\dispatch\Makefile.mk" />
     <None Include="..\example\simple\Makefile.mk" />
   </ItemGroup>
@@ -82,7 +86,9 @@
     <ClInclude Include="..\commserv\ServerId.h" />
     <ClInclude Include="..\commserv\ServerPool.h" />
     <ClInclude Include="..\commserv\SimpleJson.h" />
+    <ClInclude Include="..\commserv\Spliter.h" />
     <ClInclude Include="..\commserv\TcpClients.h" />
+    <ClInclude Include="..\example\broker_dispatch\proto.h" />
     <ClInclude Include="..\example\dispatch\proto.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

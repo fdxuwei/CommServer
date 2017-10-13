@@ -13,6 +13,9 @@
     <Filter Include="commserv">
       <UniqueIdentifier>{88ffcf80-8fde-4a71-b0a1-2cc8b2063881}</UniqueIdentifier>
     </Filter>
+    <Filter Include="example\broker_dispatch">
+      <UniqueIdentifier>{98aa84ef-68f7-4b50-8c26-bc789ca3b452}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\example\simple\Makefile.mk">
@@ -26,6 +29,9 @@
     </None>
     <None Include="..\commserv\CommProto.proto">
       <Filter>commserv</Filter>
+    </None>
+    <None Include="..\example\broker_dispatch\Makefile.mk">
+      <Filter>example\broker_dispatch</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -61,6 +67,15 @@
     </ClCompile>
     <ClCompile Include="..\example\dispatch\worker.cc">
       <Filter>example\dispatch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\commserv\ServerBroker.cc">
+      <Filter>commserv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\example\broker_dispatch\master.cc">
+      <Filter>example\broker_dispatch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\example\broker_dispatch\worker.cc">
+      <Filter>example\broker_dispatch</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -102,6 +117,12 @@
     </ClInclude>
     <ClInclude Include="..\commserv\ServerBroker.h">
       <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\commserv\Spliter.h">
+      <Filter>commserv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\example\broker_dispatch\proto.h">
+      <Filter>example\broker_dispatch</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
